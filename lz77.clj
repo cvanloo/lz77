@@ -10,6 +10,8 @@
 ; [[0 0 \a] [0 0 \b] [2 4 \c] [0 0 \d]]
 ; user=> (lz77/compress-with-rle "ababacd")
 ; [[0 0 \a] [0 0 \b] [2 3 \c] [0 0 \d]]
+; user=> (lz77/compress-with-rle "abdababacf")
+; [[0 0 \a] [0 0 \b] [0 0 \d] [3 2 \a] [2 2 \c] [0 0 \f]]
 ;
 ; user=> (apply str (lz77/decode [[0 0 \s] [0 0 \i] [0 0 \r] [0 0 \_] [4 2 \d] [4 1 \e] [0 0 \a] [6 1 \t] [0 0 \m] [4 1 \n]]))
 ; "sir_sid_eastman"
@@ -73,8 +75,10 @@
   (let [search-buffer (take i window)
         lookahead-buffer (drop i window)
         [offset match] (search search-buffer lookahead-buffer)
-        run-len (rle match lookahead-buffer)
         match-len (count match)
+        run-len (if (= match-len offset)
+                  (rle match lookahead-buffer)
+                  1)
         total-len (int (Math/ceil (* run-len match-len)))
         next-i (+ i total-len)
         next-char (get window next-i)]
@@ -105,3 +109,7 @@
         (concat decoded s [ch])))
     []
     compressed))
+
+(defn decompress
+  [compressed]
+  (apply str (decode compressed)))
