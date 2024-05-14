@@ -1,4 +1,5 @@
 ; (require 'lz77 :reload)
+;
 ; user=> (lz77/compress-normal "abracadabra")
 ; [[0 0 \a] [0 0 \b] [0 0 \r] [3 1 \c] [2 1 \d] [7 4 nil]]
 ; user=> (lz77/compress-normal "sir_sid_eastman")
@@ -9,6 +10,13 @@
 ; [[0 0 \a] [0 0 \b] [2 4 \c] [0 0 \d]]
 ; user=> (lz77/compress-with-rle "ababacd")
 ; [[0 0 \a] [0 0 \b] [2 3 \c] [0 0 \d]]
+;
+; user=> (apply str (lz77/decode [[0 0 \s] [0 0 \i] [0 0 \r] [0 0 \_] [4 2 \d] [4 1 \e] [0 0 \a] [6 1 \t] [0 0 \m] [4 1 \n]]))
+; "sir_sid_eastman"
+; user=> (apply str (lz77/decode [[0 0 \a] [0 0 \b] [2 3 \c] [0 0 \d]]))
+; "ababacd"
+; user=> (apply str (lz77/decode [[0 0 \a] [0 0 \b] [2 4 \c] [0 0 \d]]))
+; "abababcd"
 (ns lz77)
 
 (defn search
@@ -84,3 +92,16 @@
 
 (def compress-normal (partial compress encode))
 (def compress-with-rle (partial compress encode-with-rle))
+
+(defn decode
+  [compressed]
+  (reduce
+    (fn [decoded [offset length ch]]
+      (let [s (take length
+                    (drop (- (count decoded)
+                             offset)
+                          decoded))
+            s (take length (apply concat (repeat s)))]
+        (concat decoded s [ch])))
+    []
+    compressed))
