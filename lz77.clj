@@ -113,3 +113,23 @@
 (defn decompress
   [compressed]
   (apply str (decode compressed)))
+
+;; clojure.test.check is a property testing library, similar to Haskell's QuickCheck
+
+(require '[clojure.test.check :as tc])
+(require '[clojure.test.check.generators :as gen])
+(require '[clojure.test.check.properties :as prop])
+
+(def encode-normal-decodes-to-same-text-prop
+  (prop/for-all [s gen/string-alphanumeric]
+    (= s (decompress (compress-normal s)))))
+
+; user=> (tc/quick-check 100 lz77/encode-normal-decodes-to-same-text-prop)
+; {:result true, :pass? true, :num-tests 100, :time-elapsed-ms 147, :seed 1715692922726}
+
+(def encode-with-rle-decodes-to-same-text-prop
+  (prop/for-all [s gen/string-alphanumeric]
+    (= s (decompress (compress-with-rle s)))))
+
+; user=> (tc/quick-check 100 encode-with-rle-decodes-to-same-text-prop)
+; {:result true, :pass? true, :num-tests 100, :time-elapsed-ms 120, :seed 1715693027655}
